@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Maze Ultimate | Innovators Club LSS</title>
+
+<style>
+/* ---------- ROOT ---------- */
+:root{
+  --neon-pink:#ff00ff;
+  --neon-cyan:#00ffff;
+  --danger:#ff3333;
+}
+
+/* ---------- BODY ---------- */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: white;
+  background: linear-gradient(-45deg,#0f0c29,#302b63,#24243e);
+  background-size: 400% 400%;
+  animation: bgShift 12s ease infinite;
+}
+@keyframes bgShift{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+#mainContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* vertical center */
+  align-items: center;     /* horizontal center */
+  min-height: 100vh;       /* full screen height */
+  width: 100%;
+}
+#settingsBtn{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  font-size:2.5rem;
+  cursor:pointer;
+  z-index:1000;
+  animation:neonPulse 1.5s infinite alternate;
+}
+#settingsBtn:hover{
+  transform:scale(1.2);
+  text-shadow:0 0 10px var(--neon-cyan),0 0 20px var(--neon-pink);
+}
+@keyframes neonPulse{
+  0%{text-shadow:0 0 5px var(--neon-cyan);}
+  50%{text-shadow:0 0 15px var(--neon-pink);}
+  100%{text-shadow:0 0 5px var(--neon-cyan);}
+}
+
+#settingsPanel{
+  position:fixed; top:0; right:0; width:300px; height:100%;
+  background:rgba(0,0,0,0.95); color:white; padding:1rem;
+  display:none; flex-direction:column; z-index:1001;
+}
+/* ---------- SHOP CARDS ---------- */
+.shopContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.shopCard {
+  background: rgba(0,0,0,0.4);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  position: relative;
+  transition: transform 0.2s;
+}
+.shopCard:hover { transform: scale(1.05); }
+.shopCard img { width: 100%; height: 120px; object-fit: cover; border-radius: 10px; }
+.ownedBadge {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background: gold;
+  color: black;
+  font-weight: bold;
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+
+/* ---------- SECTIONS ---------- */
+.section{display:none;text-align:center;width:90%;max-width:420px;}
+.section.active{display:block}
+
+/* ---------- HUD ---------- */
+#hud{
+  position:fixed;
+  top:10px;
+  width:100%;
+  display:flex;
+  justify-content:space-around;
+  font-weight:bold;
+}
+.hudBox{
+  background:rgba(0,0,0,.4);
+  padding:.5rem 1rem;
+  border-radius:12px;
+  box-shadow:0 0 12px var(--neon-cyan);
+}
+
+/* ---------- HOME ---------- */
+#title{
+  font-size:2.5rem;
+  font-weight:900;
+  background:linear-gradient(90deg,var(--neon-cyan),var(--neon-pink));
+  -webkit-background-clip:text;
+  color:transparent;
+  animation:slideIn 1s ease forwards;
+}
+@keyframes slideIn{
+  from{transform:translateX(-100%);opacity:0}
+  to{transform:translateX(0);opacity:1}
+}
+.subtitle{opacity:.8;margin-bottom:2rem}
+.bigBtn{
+  width:200px; height:70px; border-radius:50px; border:none;
+  font-size:1.5rem; font-weight:bold; cursor:pointer;
+  background:linear-gradient(90deg,var(--neon-pink),var(--neon-cyan));
+  box-shadow:0 0 30px var(--neon-pink);
+}
+.smallBtn{
+  margin-top:1rem; padding:.7rem 1.5rem;
+  background: linear-gradient(135deg, cyan, purple);
+  border-radius:30px; border:none; cursor:pointer;
+}
+
+/* ---------- MAZE ---------- */
+#maze{
+  display:grid;
+  grid-template-columns:repeat(4,60px);
+  gap:10px;
+  justify-content:center;
+  margin-top:1.5rem;
+}
+.cell{
+  width:60px; height:60px; background:#111;
+  border-radius:12px; cursor:pointer;
+  transition:.2s;
+}
+.cell.highlight{background:var(--neon-cyan);box-shadow:0 0 20px var(--neon-cyan)}
+.cell.correct{background:#00ff00}
+.cell.wrong{background:#ff0000}
+
+/* ---------- BOSS ---------- */
+#bossBanner{
+  background:var(--danger);
+  padding:.5rem;
+  border-radius:12px;
+  margin-bottom:.5rem;
+  display:none;
+}
+body.boss::after {
+  content:'';
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  pointer-events:none;
+  background:radial-gradient(circle, rgba(255,0,0,0.1) 0%, rgba(0,0,0,0) 70%);
+  animation: heartbeat 1s infinite;
+}
+@keyframes heartbeat{
+  0%{opacity:0.2; transform: scale(1);}
+  25%{opacity:0.4; transform: scale(1.03);}
+  50%{opacity:0.2; transform: scale(1);}
+  75%{opacity:0.4; transform: scale(1.03);}
+  100%{opacity:0.2; transform: scale(1);}
+}
+body.boss{ animation: shake .3s infinite; }
+@keyframes shake{
+  0%{transform:translate(0)}
+  25%{transform:translate(-3px,2px)}
+  50%{transform:translate(3px,-2px)}
+  75%{transform:translate(-2px,-2px)}
+  100%{transform:translate(0)}
+}
+
+/* ---------- TOAST ---------- */
+.toast{
+  position:fixed; bottom:30px;
+  background:rgba(0,0,0,.7);
+  padding:1rem 2rem;
+  border-radius:20px;
+  animation:fade 2s forwards;
+}
+@keyframes fade{
+  0%{opacity:0;transform:translateY(20px)}
+  10%{opacity:1}
+  90%{opacity:1}
+  100%{opacity:0;transform:translateY(-20px)}
+}
+
+/* ---------- SETTINGS PANEL ---------- */
+
+</style>
+</head>
+
+<body>
+<!-- GAME MUSIC -->
+<audio id="happyMusic" loop>
+  <source src="audio/happy.mp3" type="audio/mpeg">
+</audio>
+<audio id="bossMusic" loop>
+  <source src="audio/boss.mp3" type="audio/mpeg">
+</audio>
+<audio id="bossHeart" loop>
+  <source src="audio/heartbeat.mp3" type="audio/mpeg">
+</audio>
+<div id="mainContent">
+<!-- HUD -->
+<div id="hud">
+  <div class="hudBox">💎 <span id="gems">0</span></div>
+  <div class="hudBox">🏆 HIGH <span id="high">0</span></div>
+  <div class="hudBox">LEVEL <span id="level">1</span></div>
+</div>
+
+<!-- HOME -->
+<div id="home" class="section active">
+  <div id="title">MEMORY MAZE ULTIMATE</div>
+  <div class="subtitle">By Innovators Club LSS</div>
+  <button class="bigBtn" onclick="startGame()">START</button><br>
+  <button class="smallBtn" onclick="show('shop')">SHOP</button>
+</div>
+
+<!-- GAME -->
+<div id="game" class="section">
+  <div id="bossBanner">☠️ BOSS BATTLE ☠️</div>
+  <div id="maze"></div>
+</div>
+
+<!-- SHOP -->
+<div id="shop" class="section">
+  <h2>🎨 THEMES</h2>
+  <div class="shopContainer" id="shopThemes"></div>
+  <button class="smallBtn" onclick="show('home')">⬅ Back</button>
+</div>
+
+<!-- SETTINGS -->
+<div id="settingsBtn">⚙️</div>
+<div id="settingsPanel">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h1 style="margin:0; font-size:1.5rem;">Settings</h1>
+    <span id="closeSettings" style="cursor:pointer;">❌</span>
+  </div>
+  <div style="margin-top:2rem;">
+    <h3>Normal Music</h3>
+    <div>
+      <span id="normalVolIcon">🔊</span>
+      <input type="range" id="normalVol" min="0" max="100" value="50">
+      <span id="normalVolVal">50%</span>
+    </div>
+  </div>
+  <div style="margin-top:2rem;">
+    <h3>Boss Music & Heartbeat</h3>
+    <div>
+      <span id="bossVolIcon">🔊</span>
+      <input type="range" id="bossVol" min="0" max="100" value="50">
+      <span id="bossVolVal">50%</span>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+/* =======================
+   STATE
+======================= */
+let level = 1, path = [], inputEnabled = false, speed = 500, step = 0;
+
+let gems = Number(localStorage.getItem('gems')) || 0;
+let high = Number(localStorage.getItem('high')) || 0;
+let ownedThemes = JSON.parse(localStorage.getItem('ownedThemes')) || ['bg0.png'];
+
+/* =======================
+   THEME LIST (SINGLE SOURCE OF TRUTH)
+======================= */
+const themeList = [
+  { img:'bg0.jpg', name:'Default', cost:0 },
+  { img:'bg1.jpg', name:'Hills', cost:300 },
+  { img:'bg2.jpg', name:'Space', cost:500 },
+  { img:'bg4.jpg', name:'AI', cost:700 },
+  { img:'bg3.png', name:'Crystal', cost:900 },
+  { img:'bg5.jpg', name:'Neon', cost:1500 },
+  { img:'bg7.jpg', name:'Cool House', cost:1700 },
+  { img:'bg6.jpg', name:'Elite House', cost:3000 }
+];
+
+/* =======================
+   ELEMENTS
+======================= */
+const maze = document.getElementById('maze');
+const gemsEl = document.getElementById('gems');
+const highEl = document.getElementById('high');
+const levelEl = document.getElementById('level');
+const bossBanner = document.getElementById('bossBanner');
+const shopThemes = document.getElementById('shopThemes');
+
+const happyMusic = document.getElementById('happyMusic');
+const bossMusic  = document.getElementById('bossMusic');
+const bossHeart  = document.getElementById('bossHeart');
+
+/* =======================
+   NAVIGATION
+======================= */
+function show(id){
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* =======================
+   GAME FLOW
+======================= */
+function startGame(){
+  level = 1;
+  speed = 500;
+  show('game');
+  nextLevel();
+}
+
+function nextLevel(){
+  levelEl.textContent = level;
+  maze.innerHTML = '';
+  path = [];
+  step = 0;
+  inputEnabled = false;
+
+  const size = level % 5 === 0 ? 5 : 4;
+  maze.style.gridTemplateColumns = `repeat(${size}, 60px)`;
+  const cells = size * size;
+
+  for(let i=0;i<cells;i++){
+    const c = document.createElement('div');
+    c.className = 'cell';
+    c.onclick = () => clickCell(i, c);
+    maze.appendChild(c);
+  }
+
+  while(path.length < level + 2){
+    const r = Math.floor(Math.random() * cells);
+    if(!path.includes(r)) path.push(r);
+  }
+
+  bossMode(level % 5 === 0);
+  showPath();
+}
+
+function showPath(){
+  inputEnabled = false;
+  clearCells();
+  const cells = document.querySelectorAll('.cell');
+  let i = 0;
+
+  const interval = setInterval(()=>{
+    clearCells();
+    cells[path[i]].classList.add('highlight');
+    i++;
+    if(i >= path.length){
+      clearInterval(interval);
+      setTimeout(()=>{
+        clearCells();
+        inputEnabled = true;
+      }, speed);
+    }
+  }, speed);
+}
+
+function clickCell(i, cell){
+  if(!inputEnabled) return;
+
+  if(i === path[step]){
+    cell.classList.add('correct');
+    step++;
+    if(step === path.length){
+      gems++;
+      level++;
+      updateHUD();
+      setTimeout(nextLevel, 700);
+    }
+  } else {
+    cell.classList.add('wrong');
+    gameOver();
+  }
+}
+
+function gameOver(){
+  inputEnabled = false;
+  clearCells();
+  high = Math.max(high, level - 1);
+  updateHUD();
+  toast("Nice move! Try again 💪");
+  show('home');
+}
+
+/* =======================
+   BOSS MODE
+======================= */
+function bossMode(on){
+  if(on){
+    bossBanner.style.display = 'block';
+    speed = 200;
+    document.body.classList.add('boss');
+
+    happyMusic.pause();
+    bossMusic.volume = bossHeart.volume = bossVol.value / 100;
+    bossMusic.currentTime = bossHeart.currentTime = 0;
+    bossMusic.play();
+    bossHeart.play();
+  } else {
+    bossBanner.style.display = 'none';
+    speed = 500;
+    document.body.classList.remove('boss');
+
+    bossMusic.pause();
+    bossHeart.pause();
+    happyMusic.volume = normalVol.value / 100;
+    happyMusic.currentTime = 0;
+    happyMusic.play();
+  }
+}
+
+/* =======================
+   HUD
+======================= */
+function updateHUD(){
+  gemsEl.textContent = gems;
+  highEl.textContent = high;
+  localStorage.setItem('gems', gems);
+  localStorage.setItem('high', high);
+}
+
+/* =======================
+   SHOP LOGIC
+======================= */
+function buyTheme(img){
+  const theme = themeList.find(t => t.img === img);
+  if(!theme) return;
+
+  if(ownedThemes.includes(img)){
+    applyTheme(img);
+    toast("Theme applied 🎨 (Owned)");
+    return;
+  }
+
+  if(gems < theme.cost){
+    toast("Not enough 💎");
+    return;
+  }
+
+  gems -= theme.cost;
+  ownedThemes.push(img);
+
+  localStorage.setItem('ownedThemes', JSON.stringify(ownedThemes));
+  updateHUD();
+  applyTheme(img);
+  toast(`Theme applied 🎨 (-${theme.cost}💎)`);
+  renderShop();
+}
+
+function applyTheme(img){
+  if(img === 'bg0.png'){
+    document.body.style.background =
+      "linear-gradient(-45deg,#0f0c29,#302b63,#24243e)";
+    document.body.style.backgroundSize = "400% 400%";
+    document.body.style.animation = "bgShift 12s ease infinite";
+  } else {
+    document.body.style.background =
+      `url(images/${img}) center / cover no-repeat`;
+    document.body.style.animation = '';
+  }
+}
+
+/* =======================
+   SHOP RENDER
+======================= */
+function renderShop(){
+  shopThemes.innerHTML = '';
+
+  themeList.forEach(theme=>{
+    const card = document.createElement('div');
+    card.className = 'shopCard';
+
+    const img = document.createElement('img');
+    img.src = `images/${theme.img}`;
+    card.appendChild(img);
+
+    if(ownedThemes.includes(theme.img) && theme.cost > 0){
+      const badge = document.createElement('div');
+      badge.className = 'ownedBadge';
+      badge.textContent = 'Owned';
+      card.appendChild(badge);
+    }
+
+    const btn = document.createElement('button');
+    btn.textContent =
+      theme.cost === 0
+        ? `${theme.name} – FREE`
+        : `${theme.name} – ${theme.cost}💎`;
+
+    btn.onclick = () => buyTheme(theme.img);
+    btn.style.marginTop = '.5rem';
+    btn.style.padding = '.5rem 1rem';
+    btn.style.borderRadius = '12px';
+    btn.style.border = 'none';
+    btn.style.cursor = 'pointer';
+    btn.style.background =
+      'linear-gradient(90deg, var(--neon-pink), var(--neon-cyan))';
+    btn.style.color = 'white';
+    btn.style.fontWeight = 'bold';
+
+    card.appendChild(btn);
+    shopThemes.appendChild(card);
+  });
+}
+
+/* =======================
+   UTILITIES
+======================= */
+function clearCells(){
+  document.querySelectorAll('.cell')
+    .forEach(c=>c.classList.remove('correct','wrong','highlight'));
+}
+
+function toast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2000);
+}
+
+/* =======================
+   INIT
+======================= */
+updateHUD();
+renderShop();
+</script>
+</body>
+</html>
